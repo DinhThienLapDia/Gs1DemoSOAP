@@ -11,14 +11,13 @@ import java.math.BigDecimal;
 import java.sql.*;
 import vn.org.gs1.gepir.load.*;
 
-
 import org.apache.axis2.databinding.types.*;
 
 /**
  * RouterSkeleton java skeleton for the axisService
  */
 public class RouterSkeleton {
-	
+
 	private DBConnection db = new DBConnection();
 
 	/**
@@ -31,35 +30,34 @@ public class RouterSkeleton {
 	public vn.org.gs1.gepir.www.GepirPartyE getOwnerOfGLN(vn.org.gs1.gepir.www.GetOwnerOfGLNE getOwnerOfGLN) {
 		BigDecimal version = getOwnerOfGLN.getGetOwnerOfGLN().getVersion();
 		String gln = getOwnerOfGLN.getGetOwnerOfGLN().getRequestedGln();
-		System.out.println("received request gln"+ gln);
+		System.out.println("received request gln" + gln);
 		ArrayOfLanguage requestedLanguages = getOwnerOfGLN.getGetOwnerOfGLN().getRequestedLanguages();
 		Language[] requestedLanguageToArray = requestedLanguages.getLanguage();
 		int numberOfLanguage = requestedLanguageToArray.length;
-		
+
 		Connection conn = db.getDBConnection();
 		String SQL1 = "SELECT * FROM IDD.dbo.DD_COMPANY_GLN WHERE GLN =" + "'" + gln + "'";
-		
+
 		GepirParty gepirParty = new GepirParty();
 		GepirPartyE gepirPartyE = new GepirPartyE();
 		PartyDataLineType[] partyDataLineTypeArray = new PartyDataLineType[numberOfLanguage];
-		
-		for (int i = 0; i < numberOfLanguage; i++){
-			try{
+
+		for (int i = 0; i < numberOfLanguage; i++) {
+			try {
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(SQL1);
-				while(rs.next()){
+				while (rs.next()) {
 					partyDataLineTypeArray[i] = new PartyDataLineType();
 					partyDataLineTypeArray[i].setPartyName(rs.getString("Name"));
 					System.out.println(rs.getString("Name"));
 				}
-			}catch (Exception e) {
+			} catch (Exception e) {
 				System.out.println(e.getClass().getName());
 				System.out.println(e.getMessage());
 				System.exit(0);
 			}
 		}
-		
-		
+
 		gepirParty.setPartyDataLine(partyDataLineTypeArray);
 		gepirParty.setVersion(version);
 		gepirPartyE.setGepirParty(gepirParty);
@@ -75,47 +73,49 @@ public class RouterSkeleton {
 
 	public vn.org.gs1.gepir.www.GepirItemE getItemByGTIN(vn.org.gs1.gepir.www.GetItemByGTINE getItemByGTIN) {
 		String requestedGtin = getItemByGTIN.getGetItemByGTIN().getRequestedGtin();
-		
+
 		ArrayOfLanguage requestedLanguages = getItemByGTIN.getGetItemByGTIN().getRequestedLanguages();
 		Connection conn = db.getDBConnection();
-		String SQL1 = "SELECT * FROM IDD.dbo.DD_ITEM WHERE GTIN =" + "'" + requestedGtin +"'";  
+		String SQL1 = "SELECT * FROM IDD.dbo.DD_ITEM WHERE GTIN =" + "'" + requestedGtin + "'";
 		GepirItemE gepirItemE = new GepirItemE();
-		GepirItem  gepirItem  = new GepirItem();
-		
+		GepirItem gepirItem = new GepirItem();
+
 		Language[] requestedLanguageToArray = requestedLanguages.getLanguage();
-		
+		System.out.print(requestedLanguageToArray.length);
+
 		int numberOfLanguage = requestedLanguageToArray.length;
-		
-		
+
 		ItemDataLineType[] itemDataLineTypeArray = new ItemDataLineType[numberOfLanguage];
-		for (int i =0;i<numberOfLanguage;i++){
-		try{
-			Statement stmt = conn.createStatement();  
-            ResultSet rs = stmt.executeQuery(SQL1);
-            while(rs.next()){
-            	itemDataLineTypeArray[i] = new ItemDataLineType();
-            	itemDataLineTypeArray[i].setItemName(rs.getString("Product_Name_V"));
-            	System.out.println(rs.getString("Product_Name_V"));
-            	itemDataLineTypeArray[i].setGtin(requestedGtin);
-            	itemDataLineTypeArray[i].setInformationProviderGln(rs.getString("Provider_GLN"));
-            	
-            	itemDataLineTypeArray[i].setTradeItemUnitDescriptor(ItemDataLineTypeTradeItemUnitDescriptor.BASE_UNIT_OR_EACH);
-            	
-            }
-            db.closeDB(conn);
-		}
-		catch(Exception e)  
-	       { 
-	    	   	System.out.println(e.getClass().getName());
-	            System.out.println(e.getMessage()); 
-	            System.exit(0);  
-	       } 
 		
+		Statement[] stmt = new Statement[numberOfLanguage];
+		ResultSet[] rs   = new ResultSet[numberOfLanguage];
+		for (int i = 0; i < numberOfLanguage; i++) {
+			try {
+				stmt[i] = conn.createStatement();
+				rs[i] = stmt[i].executeQuery(SQL1);
+				while (rs[i].next()) {
+					itemDataLineTypeArray[i] = new ItemDataLineType();
+					itemDataLineTypeArray[i].setItemName(rs[i].getString("Product_Name_V"));
+					System.out.println(rs[i].getString("Product_Name_V"));
+					itemDataLineTypeArray[i].setGtin(requestedGtin);
+					itemDataLineTypeArray[i].setInformationProviderGln(rs[i].getString("Provider_GLN"));
+
+					itemDataLineTypeArray[i].setTradeItemUnitDescriptor(ItemDataLineTypeTradeItemUnitDescriptor.BASE_UNIT_OR_EACH);
+
+				}
+				
+			} catch (Exception e) {
+				System.out.println(e.getClass().getName());
+				System.out.println(e.getMessage());
+				System.exit(0);
+			}
+
 		}
+		db.closeDB(conn);
 		gepirItem.setItemDataLine(itemDataLineTypeArray);
 		gepirItemE.setGepirItem(gepirItem);
 		return gepirItemE;
-		
+
 	}
 
 	/**
@@ -142,34 +142,37 @@ public class RouterSkeleton {
 	public vn.org.gs1.gepir.www.GepirPartyE getPartyByGLN(vn.org.gs1.gepir.www.GetPartyByGLNE getPartyByGLN) {
 		BigDecimal version = getPartyByGLN.getGetPartyByGLN().getVersion();
 		String[] gln = getPartyByGLN.getGetPartyByGLN().getRequestedGln();
-		System.out.println("received request gln:"+ gln.toString());
+		int numberOfGLN = gln.length;
+
+		
 		ArrayOfLanguage requestedLanguage = getPartyByGLN.getGetPartyByGLN().getRequestedLanguages();
 		Language[] requestedLanguageToArray = requestedLanguage.getLanguage();
 		int numberOfLanguage = requestedLanguageToArray.length;
-		
+
 		Connection conn = db.getDBConnection();
-		String SQL1 = "SELECT * FROM IDD.dbo.DD_COMPANY_GLN WHERE GLN =" + "'" + gln + "'";
-		
+
 		GepirParty gepirParty = new GepirParty();
 		GepirPartyE gepirPartyE = new GepirPartyE();
 		PartyDataLineType[] partyDataLineTypeArray = new PartyDataLineType[numberOfLanguage];
-		
-		for (int i = 0; i < numberOfLanguage; i++){
-			try{
-				Statement stmt = conn.createStatement();
-				ResultSet rs = stmt.executeQuery(SQL1);
-				while(rs.next()){
-					partyDataLineTypeArray[i] = new PartyDataLineType();
-					partyDataLineTypeArray[i].setPartyName(rs.getString("Name"));
-					System.out.println(rs.getString("Name"));
+		for (int i1 = 0; i1 < numberOfGLN; i1++) {
+			System.out.println("received request gln:" + gln[i1]);
+			String SQL1 = "SELECT * FROM IDD.dbo.DD_COMPANY_GLN WHERE GLN =" + "'" + gln[i1] + "'";
+			for (int i = 0; i < numberOfLanguage; i++) {
+				try {
+					Statement stmt = conn.createStatement();
+					ResultSet rs = stmt.executeQuery(SQL1);
+					while (rs.next()) {
+						partyDataLineTypeArray[i] = new PartyDataLineType();
+						partyDataLineTypeArray[i].setPartyName(rs.getString("Name"));
+						System.out.println(rs.getString("Name"));
+					}
+				} catch (Exception e) {
+					System.out.println(e.getClass().getName());
+					System.out.println(e.getMessage());
+					System.exit(0);
 				}
-			}catch (Exception e) {
-				System.out.println(e.getClass().getName());
-				System.out.println(e.getMessage());
-				System.exit(0);
 			}
 		}
-		
 		gepirParty.setPartyDataLine(partyDataLineTypeArray);
 		gepirParty.setVersion(version);
 		gepirPartyE.setGepirParty(gepirParty);
@@ -227,37 +230,36 @@ public class RouterSkeleton {
 	public vn.org.gs1.gepir.www.GepirPartyE getPartyByGTIN(vn.org.gs1.gepir.www.GetPartyByGTINE getPartyByGTIN) {
 		Connection conn = db.getDBConnection();
 		BigDecimal version = getPartyByGTIN.getGetPartyByGTIN().getVersion();
-		
+
 		String[] requestedGTIN = getPartyByGTIN.getGetPartyByGTIN().getRequestedGtin();
 		ArrayOfLanguage requestedLanguage = getPartyByGTIN.getGetPartyByGTIN().getRequestedLanguages();
-		
+
 		int numberOfGTIN = requestedGTIN.length;
 		int numberOfLanguage = requestedLanguage.getLanguage().length;
-		
+
 		GepirParty gepirParty = new GepirParty();
 		GepirPartyE gepirPartyE = new GepirPartyE();
 		PartyDataLineType[] partyDataLineTypeArray = new PartyDataLineType[numberOfLanguage];
-		
-		
-		for (int i =0; i < numberOfGTIN; i++){
-			String SQL1 = "SELECT * FROM IDD.dbo.DD_ITEM WHERE GTIN =" + "'" + requestedGTIN[i] +"'";
-			for (int i2 = 0; i < numberOfLanguage; i++){
-				try{
+
+		for (int i = 0; i < numberOfGTIN; i++) {
+			String SQL1 = "SELECT * FROM IDD.dbo.DD_ITEM WHERE GTIN =" + "'" + requestedGTIN[i] + "'";
+			for (int i2 = 0; i < numberOfLanguage; i++) {
+				try {
 					Statement stmt = conn.createStatement();
 					ResultSet rs = stmt.executeQuery(SQL1);
-					while(rs.next()){
+					while (rs.next()) {
 						partyDataLineTypeArray[i2] = new PartyDataLineType();
 						partyDataLineTypeArray[i2].setPartyName(rs.getString("Brand_Name_V"));
 						System.out.println(rs.getString("Brand_Name_V"));
 					}
-				}catch (Exception e) {
+				} catch (Exception e) {
 					System.out.println(e.getClass().getName());
 					System.out.println(e.getMessage());
 					System.exit(0);
 				}
 			}
 		}
-		
+
 		gepirParty.setVersion(version);
 		gepirParty.setPartyDataLine(partyDataLineTypeArray);
 		gepirPartyE.setGepirParty(gepirParty);
